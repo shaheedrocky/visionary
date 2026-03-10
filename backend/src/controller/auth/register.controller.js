@@ -64,8 +64,9 @@ export const registerController = async (req, res) => {
         });
 
         if (newUser) {
-            generateToken(newUser._id, res);
-            await newUser.save();
+            const savedUser = await newUser.save();
+            generateToken(savedUser._id, res);
+           
             return res.status(201).json({
             statusCode: 201,
             success: true,
