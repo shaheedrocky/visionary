@@ -1,6 +1,8 @@
 import { generateToken, isEmpty } from "../../lib/utils.js";
 import bcrypt from 'bcryptjs';
 import User from "../../models/user.model.js";
+import { emailSender } from "../../email/emailHandler.js";
+import { ENV } from "../../lib/env.js";
 
 export const registerController = async (req, res) => {
     try {
@@ -65,9 +67,9 @@ export const registerController = async (req, res) => {
 
         if (newUser) {
             const savedUser = await newUser.save();
-            generateToken(savedUser._id, res);
+            generateToken(savedUser._id, res, ENV.CLIENT_URL);
            
-            return res.status(201).json({
+            res.status(201).json({
             statusCode: 201,
             success: true,
             message: 'User successfully created!',
@@ -78,6 +80,13 @@ export const registerController = async (req, res) => {
                 profilePhoto: newUser.profilePhoto
             }
         })
+
+        try {
+            await emailSender(email, fullName, ENV.CLIENT_URL);
+        } catch (error) {
+            console.log(`Failed to send email to ${fullName} `, error);
+            
+        }
         } else {
             return res.status(400).json({
                 statusCode: 400,
