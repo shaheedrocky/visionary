@@ -3,15 +3,11 @@ import { createVisionaryWelcomeEmail } from "./emailTemplate.js";
 
 export const emailSender = async (email, name, clientUrl) => {
     // Use your verified email in test mode (development)
-    const recipientEmail =
-        process.env.NODE_ENV === "development"
-            ? "shaheedsibil@gmail.com" // Only your email in test mode
-            : email;                   // Real user email in production
-
+   
     try {
         const { data, error } = await resend.emails.send({
             from: `${sender.name} <${sender.email}>`,
-            to: recipientEmail,
+            to: email,
             subject: "Welcome to Visionary!",
             html: createVisionaryWelcomeEmail(name, clientUrl),
         });

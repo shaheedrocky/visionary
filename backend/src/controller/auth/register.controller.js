@@ -1,5 +1,5 @@
 import { generateToken, isEmpty } from "../../lib/utils.js";
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 import User from "../../models/user.model.js";
 import { emailSender } from "../../email/emailHandler.js";
 import { ENV } from "../../lib/env.js";
@@ -8,101 +8,77 @@ export const registerController = async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (isEmpty(fullName)) {
+
+        // Basic validations
+        if (isEmpty(fullName) || isEmpty(email) || isEmpty(password)) {
             return res.status(400).json({
                 statusCode: 400,
                 success: false,
-                message: 'Fullname is required'
-            })
-        }
-        if (isEmpty(email)) {
-            return res.status(400).json({
-                statusCode: 400,
-                success: false,
-                message: 'Email is required'
-            })
-        } if (isEmpty(password)) {
-            return res.status(400).json({
-                statusCode: 400,
-                success: false,
-                message: 'Password is required'
-            })
+                message: "FullName, email, and password are required",
+            });
         }
 
         if (password.length < 6) {
             return res.status(400).json({
                 statusCode: 400,
                 success: false,
-                message: 'Password must be atleast 6 characters'
-            })
+                message: "Password must be at least 6 characters",
+            });
         }
 
         if (!emailRegex.test(email)) {
             return res.status(400).json({
                 statusCode: 400,
                 success: false,
-                message: 'Email should be valid'
-            })
+                message: "Email is not valid",
+            });
         }
 
-        // hash the password
-        const salt = await bcrypt.genSalt(10)
-        const hashPassword = await bcrypt.hash(password, salt);
-
-        const user = await User.findOne({ email });
-
-        if (user) {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
             return res.status(400).json({
                 statusCode: 400,
                 success: false,
-                message: 'User already exists, Try with another email'
-            })
+                message: "User already exists, try another email",
+            });
         }
 
-        const newUser = new User({
-            fullName,
-            email,
-            password: hashPassword
-        });
+        // Hash password and create user
+        const hashPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({ fullName, email, password: hashPassword });
+        const savedUser = await newUser.save();
 
-        if (newUser) {
-            const savedUser = await newUser.save();
-            generateToken(savedUser._id, res, ENV.CLIENT_URL);
-           
-            res.status(201).json({
+        // Generate JWT token
+        generateToken(savedUser._id, res, ENV.CLIENT_URL);
+
+        // Send response first
+        res.status(201).json({
             statusCode: 201,
             success: true,
-            message: 'User successfully created!',
-            user:{
-                id: newUser._id,
-                fullName: newUser.fullName,
-                email: newUser.email,
-                profilePhoto: newUser.profilePhoto
-            }
-        })
+            message: "User successfully created!",
+            user: {
+                id: savedUser._id,
+                fullName: savedUser.fullName,
+                email: savedUser.email,
+                profilePhoto: savedUser.profilePhoto,
+            },
+        });
+
+        // Send welcome email (non-blocking)
+        const recipientEmail =
+            process.env.NODE_ENV === "development" ? "shaheedsibil@gmail.com" : email;
 
         try {
-            await emailSender(email, fullName, ENV.CLIENT_URL);
-        } catch (error) {
-            console.log(`Failed to send email to ${fullName} `, error);
-            
+            await emailSender(recipientEmail, fullName, ENV.CLIENT_URL);
+        } catch (err) {
+            console.log(`Failed to send email to ${fullName}:`, err);
         }
-        } else {
-            return res.status(400).json({
-                statusCode: 400,
-                success: false,
-                message: 'Invalid user data'
-            })
-        }
-
-       
-
     } catch (error) {
-        console.log('Error from register controller: ', error);
+        console.error("Error from register controller:", error);
         return res.status(500).json({
             statusCode: 500,
             success: false,
-            message: error.message || 'Internal Server Error'
-        })
+            message: error.message || "Internal Server Error",
+        });
     }
-}
+};
