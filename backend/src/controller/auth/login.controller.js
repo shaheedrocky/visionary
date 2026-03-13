@@ -53,7 +53,7 @@ const loginController = async (req, res) => {
         }
 
         // Generate JWT token
-        generateToken(user._id, res, ENV.CLIENT_URL);
+        generateToken(user._id, res);
 
         return res.status(200).json({
             statusCode: 200,

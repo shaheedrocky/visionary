@@ -49,7 +49,7 @@ export const registerController = async (req, res) => {
         const savedUser = await newUser.save();
 
         // Generate JWT token
-        generateToken(savedUser._id, res, ENV.CLIENT_URL);
+        generateToken(savedUser._id, res);
 
         // Send response first
         res.status(201).json({

@@ -11,5 +11,6 @@ route.post('/auth/register', registerController);
 route.post('/auth/login', loginController);
 route.post('/auth/logout', protectedRoute,logoutController);
 route.put('/auth/update-profile-photo', protectedRoute,updateUserController);
+route.get('/auth/check-user', protectedRoute,(req,res)=> res.status(200).json(req.user));
 
 export default route

@@ -4,7 +4,8 @@ import User from '../models/user.model.js';
 
 export const protectedRoute = async (req, res, next) => {
     try {
-        const token = req.cookie.token;
+        
+        const token = req.cookies.token;
         if (!token) {
             return res.status(401).json({
                 statusCode: 401,
@@ -33,6 +34,8 @@ export const protectedRoute = async (req, res, next) => {
             })
         }
         req.user = user
+        console.log('req.user: ',req.user);
+        
         next()
     } catch (error) {
         console.error("Error from register protectedRoute:", error);
