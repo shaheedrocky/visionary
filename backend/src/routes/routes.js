@@ -4,9 +4,11 @@ import loginController from '../controller/auth/login.controller.js';
 import { logoutController } from '../controller/auth/logout.controller.js';
 import { protectedRoute } from '../middleware/auth.middleware.js';
 import { updateUserController } from '../controller/user/updateUser.controller.js';
+import { arcjetProtection } from '../middleware/arject.middleware.js';
 
 const route = express.Router();
 
+route.use(arcjetProtection)
 route.post('/auth/register', registerController);
 route.post('/auth/login', loginController);
 route.post('/auth/logout', protectedRoute,logoutController);
